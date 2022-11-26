@@ -17,6 +17,7 @@ Example Usage:
 import argparse
 import math
 import numpy as np
+import phylo
 
 
 '''Reads the fasta file and outputs the sequence to analyze.
@@ -39,45 +40,6 @@ def read_fasta(filename):
     return strs
 
 
-''' Computes the likelihood of the data given the topology specified by ordering
-
-Arguments:
-    data: sequence data (dict: name of sequence owner -> sequence)
-    models: tree + ordering + branch length
-Returns:
-    likelihoods: 1 x M likelihood matrix
-'''
-
-
-def likelihood(model, data):
-    base_conversion = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
-    m = len(data[0])
-    likelihoods = np.zeros(m)
-    for i in range(0, m):
-        # temp
-        likelihoods[i] = model[base_conversion[data[0][i]]]
-    return likelihoods
-
-
-''' Computes the likelihood of the data given the topology specified by ordering
-
-Arguments:
-    models: array of A models (trees + orderings + branch lengths)
-    data: array of N M-char sequences
-Returns:
-    likelihoods: A x M log likelihood matrix
-'''
-
-
-def phylo(models, data):
-    a = len(models)
-    m = len(data[0])
-    likelihoods = np.zeros((a, m))
-    for i in range(0, a):
-        likelihoods[i] = likelihood(models[i], data)
-    return likelihoods
-
-
 ''' Outputs the Viterbi decoding of a given observation.
 Arguments:
 	obs: list of N M-char sequences
@@ -93,7 +55,6 @@ Returns:
 
 def viterbi(obs, trans_probs, phylo, init_probs):
     # initialization
-    n = len(obs)
     m = len(obs[0])
     a = len(trans_probs)
     hmm = np.zeros((a, m))
@@ -180,7 +141,7 @@ def main():
         [np.log(0.13), np.log(0.37), np.log(0.37), np.log(0.13)],
         [np.log(0.32), np.log(0.18), np.log(0.18), np.log(0.32)]
     ])
-    emission_probabilities = phylo(emission_probabilities, obs_sequence)
+    emission_probabilities = phylo.phylo(emission_probabilities, obs_sequence)
     initial_probabilities = np.array([np.log(0.5), np.log(0.5)])
     sequence, p = viterbi(obs_sequence, transition_probabilities,
                           emission_probabilities, initial_probabilities)
