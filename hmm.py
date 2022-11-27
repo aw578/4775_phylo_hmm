@@ -14,30 +14,7 @@ Example Usage:
     python 2a.py -f hmm-sequence.fasta -mu 0.01 -out viterbi-intervals.txt
 '''
 
-import argparse
-import math
 import numpy as np
-import phylo
-
-
-'''Reads the fasta file and outputs the sequence to analyze.
-Arguments:
-	filename: name of the fasta file
-Returns:
-	strs: array of stringsss
-'''
-
-
-def read_fasta(filename):
-    with open(filename, "r") as f:
-        lines = f.readlines()
-        strs = ["" for _ in range(math.floor(len(lines) / 2))]
-    for i in range(1, len(lines), 2):
-        j = (int)((i - 1) / 2)
-        strs[j] = ""
-        for l in lines[i]:
-            strs[j] += l.strip()
-    return strs
 
 
 ''' Outputs the Viterbi decoding of a given observation.
@@ -92,66 +69,3 @@ def viterbi(obs, trans_probs, phylo, init_probs):
         curr_state = traceback[curr_state][i]
         sequence[i - 1] = curr_state
     return sequence, curr_state_prob
-
-
-''' Returns a list of non-overlapping intervals describing the GC rich regions.
-Arguments:
-	sequence: list of hidden states
-Returns:
-	intervals: list of tuples (i, j), 1 <= i <= j <= len(sequence), that
-                describe GC rich regions in the input list of hidden states.
-'''
-
-
-def find_intervals(sequence):
-    intervals = []
-    i = 1
-    while (i < len(sequence) + 1):
-        if(sequence[i - 1] == 0):
-            start = i
-            end = i
-            while(i < len(sequence) and sequence[i] == 0):
-                i += 1
-                end += 1
-            intervals = intervals + [(start, end)]
-        i += 1
-    return intervals
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description='Parse a sequence into GC-rich and GC-poor regions using Viterbi.')
-    parser.add_argument('-f', action="store", dest="f",
-                        type=str, default="hmm-sequence.fasta")
-    parser.add_argument('-mu', action="store", dest="mu",
-                        type=float, default=0.01)
-    parser.add_argument('-out', action="store", dest="out",
-                        type=str, default="viterbi-intervals.txt")
-
-    args = parser.parse_args()
-    fasta_file = args.f
-    mu = args.mu
-    intervals_file = args.out
-
-    obs_sequence = read_fasta(fasta_file)
-    transition_probabilities = np.array([
-        [np.log(1 - mu), np.log(mu)],
-        [np.log(mu), np.log(1 - mu)]])
-    emission_probabilities = np.array([
-        [np.log(0.13), np.log(0.37), np.log(0.37), np.log(0.13)],
-        [np.log(0.32), np.log(0.18), np.log(0.18), np.log(0.32)]
-    ])
-    emission_probabilities = phylo.phylo(emission_probabilities, obs_sequence)
-    initial_probabilities = np.array([np.log(0.5), np.log(0.5)])
-    sequence, p = viterbi(obs_sequence, transition_probabilities,
-                          emission_probabilities, initial_probabilities)
-    intervals = find_intervals(sequence)
-    with open(intervals_file, "w") as f:
-        f.write("\n".join([("%d,%d" % (start, end))
-                for (start, end) in intervals]))
-        f.write("\n")
-    print("Viterbi probability: {:.2f}".format(p))
-
-
-if __name__ == "__main__":
-    main()

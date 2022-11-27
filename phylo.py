@@ -1,50 +1,49 @@
 import math
 import numpy as np
+import nwk
 
 
-class Node():
-    '''Calculates a branch probability matrix using the Jukes-Cantor model.
-    '''
+def traverse(root, lst):
+    if(root != None):
+        traverse(root.left, lst)
+        traverse(root.right, lst)
+        lst.append(root)
 
-    def jcm(self, len):
-        at = 0.75*(1 - math.e**(-4 * len / 3))
-        bp = np.full((4, 4), at / 3)
-        for i in range(0, 4):
-            bp[i][i] = (1 - at)
-        return bp
-    ''' Initializes a node with given parameters.
+# init_models is an array of nwk trees
 
-    Arguments:
-        name: name of node (corresponds to sequence number, so sequences should be left to right)
-        left: left child (Node)
-        right: right child (Node)
-        branch_length: length of branch that leads to this node (float)
-        probs: probability of observed bases beneath this node
-                [list of 4 probs for 'ACGT'] (initialized to None)
-    '''
 
-    def __init__(self, name, left, right, branch_length):
-        self.name = name
-        self.left = left
-        self.right = right
-        self.bp = self.jcm(branch_length)
-        self.probs = None
+def build_orderings(init_models):
+    final_orderings = []
+    for i in range(len(init_models)):
+        nwk = init_models[i]
+        root, _ = nwk.parse_nwk(nwk, 0)
+        ordering = []
+        traverse(root, ordering)
+        final_orderings.append(ordering)
+    return final_orderings
+
+
+def reweight(final_orderings, init_weights):
+    for i in range(len(final_orderings)):
+        for j in range(len(final_orderings[i])):
+            final_orderings[i][j].bp *= init_weights[i]
+            final_orderings[i][j].bp.jcm()
 
 
 ''' Computes the likelihood of the data given the topology specified by ordering
 
 Arguments:
-    data: sequence data (dict: name of sequence owner -> sequence)
-    models: tree + ordering + branch length
+    data: sequence data (array of strings)
+    models: trees (with branch lengths, names correspond to data pos)
+    ordering = ordering of tree
 Returns:
     likelihoods: 1 x M likelihood matrix
 '''
 
 
-def likelihood(model, data):
+def likelihood(ordering, data):
     base_conversion = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
     m = len(data[0])
-    ordering = model.ordering
 
     for i in range(0, len(ordering)):
         current_node = ordering[i]
@@ -71,6 +70,7 @@ def likelihood(model, data):
                     l_sum = 0
                     r_sum = 0
                     for y in range(0, 4):
+                        # might need to do log probs
                         l_sum += (l_bp[x][y] * l_p[i][y])
                         r_sum += (r_bp[x][y] * r_p[i][y])
                     new_matrix[i][x] = l_sum * r_sum
@@ -90,17 +90,17 @@ def likelihood(model, data):
 ''' Computes the likelihood of the data given the topology specified by ordering
 
 Arguments:
-    models: array of A models (trees + orderings + branch lengths)
+    orderings: array of A orderings of trees
     data: array of N M-char sequences
 Returns:
     likelihoods: A x M log likelihood matrix
 '''
 
 
-def phylo(models, data):
-    a = len(models)
+def phylo(orderings, data):
+    a = len(orderings)
     m = len(data[0])
     likelihoods = np.zeros((a, m))
     for i in range(0, a):
-        likelihoods[i] = likelihood(models[i], data)
+        likelihoods[i] = likelihood(orderings[i], data)
     return likelihoods
