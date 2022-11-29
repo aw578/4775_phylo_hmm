@@ -37,7 +37,7 @@ def read_transitions(filename):
         lines = f.readlines()
         transitions = np.zeros((len(lines), len(lines)))
     for i in range(0, len(lines)):
-        continue
+        transitions[i] = np.array(lines[i].split())
     return transitions
 
 
@@ -98,12 +98,15 @@ def find_intervals(sequence):
         i += 1
     return intervals
 
-#TODO: finish
-
 
 def find_init_probs(prob_matrix):
     probs = np.zeros(len(prob_matrix))
-    return probs
+    total = 0
+    for i in range(len(prob_matrix)):
+        for j in range(len(prob_matrix[0])):
+            probs[j] += prob_matrix[i][j]
+            total += prob_matrix[i][j]
+    return (probs / total)
 
 
 def main():
@@ -133,9 +136,11 @@ def main():
     init_weights = read_weights(weight_file)
 
     init_probs = find_init_probs(transitions)
-    models = phylo.reweight(phylo.build_orderings(init_models), init_weights)
+    orderings = phylo.build_orderings(init_models)
+    phylo.reweight(orderings, init_weights)
 
-    emiss_probs = phylo.phylo(models, obs)
+    emiss_probs = phylo.phylo(orderings, obs)
+
     sequence, p = hmm.viterbi(obs, transitions, emiss_probs, init_probs)
     intervals = find_intervals(sequence)
     with open(intervals_file, "w") as f:

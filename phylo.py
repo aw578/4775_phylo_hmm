@@ -1,6 +1,14 @@
 import math
 import numpy as np
-import nwk
+import nwk as parse_nwk
+
+
+def jcm(len):
+    at = 0.75*(1 - math.e**(-4 * len / 3))
+    bp = np.full((4, 4), at / 3)
+    for i in range(0, 4):
+        bp[i][i] = (1 - at)
+    return bp
 
 
 def traverse(root, lst):
@@ -9,14 +17,12 @@ def traverse(root, lst):
         traverse(root.right, lst)
         lst.append(root)
 
-# init_models is an array of nwk trees
-
 
 def build_orderings(init_models):
     final_orderings = []
     for i in range(len(init_models)):
         nwk = init_models[i]
-        root, _ = nwk.parse_nwk(nwk, 0)
+        root, _ = parse_nwk.parse_nwk(nwk, 0)
         ordering = []
         traverse(root, ordering)
         final_orderings.append(ordering)
@@ -26,8 +32,8 @@ def build_orderings(init_models):
 def reweight(final_orderings, init_weights):
     for i in range(len(final_orderings)):
         for j in range(len(final_orderings[i])):
-            final_orderings[i][j].bp *= init_weights[i]
-            final_orderings[i][j].bp.jcm()
+            final_orderings[i][j].branch_length *= init_weights[i]
+            final_orderings[i][j].bp = jcm(final_orderings[i][j].branch_length)
 
 
 ''' Computes the likelihood of the data given the topology specified by ordering
@@ -53,8 +59,9 @@ def likelihood(ordering, data):
 
         # if it's a leaf node, 1s and 0s
         if(name is not None):
-            for i in range(0, m):
-                new_matrix[i][base_conversion[data[name][i]]] = 1
+            for j in range(0, m):
+                base_value = base_conversion[data[name][j]]
+                new_matrix[j][base_value] = 1
 
         # otherwise feisenstein
         else:
@@ -79,11 +86,13 @@ def likelihood(ordering, data):
     # get current node matrix, add rows together, divide by 4, then add up logs (can reorder)
     final_matrix = ordering[len(ordering) - 1].probs
     likelihoods = np.zeros(m)
+    sum = 0
     for i in range(0, m):
         for x in range(0, 4):
             likelihoods[i] += final_matrix[i][x]
         likelihoods[i] = np.log(likelihoods[i] / 4)
-
+        sum += likelihoods[i]
+    print(sum)
     return likelihoods
 
 
