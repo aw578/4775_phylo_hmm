@@ -56,7 +56,10 @@ def parse_nwk(nwk, index):
     else:
         left, index = parse_nwk(nwk, index)
         index += 2
-        right, index = parse_nwk(nwk, index)
+        if(nwk[index].isnumeric()):
+            right, index = parse_leaf(nwk, index)
+        else:
+            right, index = parse_nwk(nwk, index)
         index += 2
         branch_length, end_index = parse_branch_length(nwk, index)
         return Node(None, left, right, branch_length), end_index

@@ -60,8 +60,15 @@ def likelihood(ordering, data):
         # if it's a leaf node, 1s and 0s
         if(name is not None):
             for j in range(0, m):
-                base_value = base_conversion[data[name][j]]
-                new_matrix[j][base_value] = 1
+                if(data[name][j] != '-'):
+                    base_value = base_conversion[data[name][j]]
+                    new_matrix[j][base_value] = 1
+                else:
+                    # should preserve values?
+                    new_matrix[j][0] = 1
+                    new_matrix[j][1] = 1
+                    new_matrix[j][2] = 1
+                    new_matrix[j][3] = 1
 
         # otherwise feisenstein
         else:

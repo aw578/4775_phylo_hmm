@@ -15,12 +15,16 @@ Returns:
 def read_fasta(filename):
     with open(filename, "r") as f:
         lines = f.readlines()
-        strs = ["" for _ in range(math.floor(len(lines) / 2))]
-    for i in range(1, len(lines), 2):
-        j = (int)((i - 1) / 2)
-        strs[j] = ""
-        for l in lines[i]:
-            strs[j] += l.strip()
+        strs = []
+    current_str = -1
+    for i in range(0, len(lines)):
+        if(lines[i][0] == '>'):
+            current_str += 1
+        else:
+            if(current_str < len(strs)):
+                strs[current_str] += lines[i].strip()
+            else:
+                strs.append(lines[i].strip())
     return strs
 
 
@@ -54,7 +58,7 @@ def read_weights(filename):
         lines = f.readlines()
         weights = np.zeros(len(lines))
     for i in range(0, len(lines)):
-        weights[i] = int(lines[i].strip())
+        weights[i] = float(lines[i].strip())
     return weights
 
 
@@ -113,11 +117,11 @@ def main():
     parser = argparse.ArgumentParser(
         description='Parse sequences into coding and noncoding regions using Phylo-HMM.')
     parser.add_argument('-seqs', action="store", dest="seqs",
-                        type=str, default="hmm-sequence.fasta")
+                        type=str, default="hsv.fasta")
     parser.add_argument('-t', action="store", dest="transitions",
                         type=str, default="transitions.txt")
     parser.add_argument('-m', action="store", dest="models",
-                        type=str, default="models.nwk")
+                        type=str, default="hsv.nwk")
     parser.add_argument('-w', action="store", dest="weights",
                         type=str, default="weights.txt")
     parser.add_argument('-out', action="store", dest="out",
@@ -130,7 +134,9 @@ def main():
     weight_file = args.weights
     intervals_file = args.out
 
+    # WRONG!!!!!!
     obs = read_fasta(fasta_file)
+    # print(len(obs[0]))
     transitions = read_transitions(transition_file)
     init_models = read_models(model_file)
     init_weights = read_weights(weight_file)
