@@ -134,9 +134,7 @@ def main():
     weight_file = args.weights
     intervals_file = args.out
 
-    # WRONG!!!!!!
     obs = read_fasta(fasta_file)
-    # print(len(obs[0]))
     transitions = read_transitions(transition_file)
     init_models = read_models(model_file)
     init_weights = read_weights(weight_file)
