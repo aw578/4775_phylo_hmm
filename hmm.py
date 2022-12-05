@@ -14,6 +14,7 @@ Example Usage:
     python 2a.py -f hmm-sequence.fasta -mu 0.01 -out viterbi-intervals.txt
 '''
 
+import datetime
 import numpy as np
 
 

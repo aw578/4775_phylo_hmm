@@ -1,3 +1,4 @@
+import datetime
 import math
 import numpy as np
 import nwk as parse_nwk
@@ -95,11 +96,11 @@ def likelihood(ordering, data):
     likelihoods = np.zeros(m)
     sum = 0
     for i in range(0, m):
+        curr_likelihood = 0
         for x in range(0, 4):
-            likelihoods[i] += final_matrix[i][x]
-        likelihoods[i] = np.log(likelihoods[i] / 4)
+            curr_likelihood += final_matrix[i][x]
+        likelihoods[i] = np.log(curr_likelihood / 4)
         sum += likelihoods[i]
-    print(sum)
     return likelihoods
 
 

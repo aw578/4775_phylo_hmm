@@ -98,7 +98,11 @@ def find_intervals(sequence):
             while(i < len(sequence) and sequence[i] == 0):
                 i += 1
                 end += 1
-            intervals = intervals + [(start, end)]
+            if(start != end):
+                intervals = intervals + [(start, end)]
+            num += end - start + 1
+            if(i > 4999 and i < 10001):
+                num_5_10 += end - start + 1
         i += 1
     return intervals
 
@@ -151,7 +155,6 @@ def main():
         f.write("\n".join([("%d,%d" % (start, end))
                 for (start, end) in intervals]))
         f.write("\n")
-    print("Viterbi probability: {:.2f}".format(p))
 
 
 if __name__ == "__main__":
