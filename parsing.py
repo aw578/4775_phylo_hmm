@@ -26,7 +26,22 @@ def read_fasta(filename):
                 strs[current_str] += lines[i].strip()
             else:
                 strs.append(lines[i].strip())
-    return strs
+
+    nums = np.zeros((len(strs), len(strs[0])), int)
+    for i in range(0, len(strs)):
+        for j in range(0, len(strs[0])):
+            if(strs[i][j] == 'A'):
+                nums[i][j] = 0
+            elif(strs[i][j] == 'C'):
+                nums[i][j] = 1
+            elif(strs[i][j] == 'G'):
+                nums[i][j] = 2
+            elif(strs[i][j] == 'T'):
+                nums[i][j] = 3
+            else:  # '-'
+                nums[i][j] = 4
+
+    return nums
 
 
 '''
@@ -108,8 +123,9 @@ def find_intervals(sequence):
             else:
                 num += end - start + 1
         i += 1
-    print(num / (len(sequence) - 5000))
-    print(num_5_10 / 5000)
+    print("conserved within conserved region: " +
+          str(num * 100 / (len(sequence) - 5000)) + "%")
+    print("conserved within nonconserved region: " + str(num_5_10 / 50) + "%")
     return intervals
 
 
@@ -140,16 +156,14 @@ def main():
     init_weights = read_weights(weight_file)
 
     init_probs = training.train_initial_weightings(transitions)
-    orderings = phylo.build_orderings(init_models)
+    orderings = phylo.build_orderings(init_models, obs)
     phylo.reweight(orderings, init_weights)
 
     # print(datetime.datetime.now())
-    emiss_probs = phylo.phylo(orderings, obs)
+    emiss_probs = phylo.phylo(orderings)
     # print(datetime.datetime.now())
-    sequence, p = hmm.viterbi(obs, transitions, emiss_probs, init_probs)
+    sequence, p = hmm.viterbi(transitions, emiss_probs, init_probs)
     # print(datetime.datetime.now())
-    print(p)
-    print(training.train_transitions(transitions, sequence))
     intervals = find_intervals(sequence)
     with open(intervals_file, "w") as f:
         f.write("\n".join([("%d,%d" % (start, end))

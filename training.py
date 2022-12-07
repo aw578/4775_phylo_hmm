@@ -15,6 +15,8 @@ def train_transitions(transitions, sequence):
 
 
 def generate_ancestral_sequence(parent):
+    # note: if both children are a -, then ancestral sequence is also a -
+    
     pass
 
 

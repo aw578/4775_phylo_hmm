@@ -31,9 +31,9 @@ Returns:
 '''
 
 
-def viterbi(obs, trans_probs, phylo, init_probs):
+def viterbi(trans_probs, phylo, init_probs):
     # initialization
-    m = len(obs[0])
+    m = len(phylo[0])
     a = len(trans_probs)
     hmm = np.zeros((a, m))
     traceback = np.zeros((a, m), int)

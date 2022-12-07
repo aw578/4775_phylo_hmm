@@ -1,6 +1,6 @@
 import math
 import numpy as np
-import nwk as parse_nwk
+import nwk
 
 
 def jcm(len):
@@ -17,12 +17,14 @@ def traverse(root, lst):
         traverse(root.right, lst)
         lst.append(root)
 
+# initialize ancestral sequences somewhere!
 
-def build_orderings(init_models):
+
+def build_orderings(init_models, obs):
     final_orderings = []
     for i in range(len(init_models)):
-        nwk = init_models[i]
-        root, _ = parse_nwk.parse_nwk(nwk, 0)
+        model = init_models[i]
+        root, _ = nwk.parse_nwk(model, 0, obs)
         ordering = []
         traverse(root, ordering)
         final_orderings.append(ordering)
@@ -47,21 +49,20 @@ Returns:
 '''
 
 
-def likelihood(ordering, data):
-    base_conversion = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
-    m = len(data[0])
+def likelihood(ordering):
+    m = len(ordering[0].ancestral_sequence)
 
     for i in range(0, len(ordering)):
         current_node = ordering[i]
         name = current_node.name
 
         # if it's a leaf node, 1s and 0s
+        # TODO: can apparently be optimized
         if(name is not None):
             current_node.probs = np.zeros((m, 4))
             for j in range(0, m):
-                if(data[name][j] != '-'):
-                    base_value = base_conversion[data[name][j]]
-                    current_node.probs[j][base_value] = 1
+                if(ordering[i].ancestral_sequence[j] != 4):
+                    current_node.probs[j][ordering[i].ancestral_sequence[j]] = 1
                 else:
                     current_node.probs[j].fill(1)
 
@@ -73,7 +74,7 @@ def likelihood(ordering, data):
     # get current node matrix, add rows together, divide by 4, then add up logs (can reorder)
     final_matrix = ordering[len(ordering) - 1].probs
     likelihoods = np.log(final_matrix.sum(axis=1) / 4)
-    sum = np.sum(likelihoods)
+    # sum = np.sum(likelihoods)
     return likelihoods
 
 
@@ -87,10 +88,10 @@ Returns:
 '''
 
 
-def phylo(orderings, data):
+def phylo(orderings):
     a = len(orderings)
-    m = len(data[0])
+    m = len(orderings[0][0].ancestral_sequence)
     likelihoods = np.zeros((a, m))
     for i in range(0, a):
-        likelihoods[i] = likelihood(orderings[i], data)
+        likelihoods[i] = likelihood(orderings[i])
     return likelihoods

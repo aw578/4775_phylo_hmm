@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class Node():
     ''' Initializes a node with given parameters.
 
@@ -10,14 +13,14 @@ class Node():
                 [4 x m probs for 'ACGT'] (initialized to None)
     '''
 
-    def __init__(self, name, left, right, branch_length):
+    def __init__(self, name, left, right, branch_length, ancestral_sequence):
         self.name = name
         self.left = left
         self.right = right
         self.branch_length = branch_length
-        self.ancestral_sequence = None
+        self.ancestral_sequence = ancestral_sequence
         self.bp = None
-        self.probs = None
+        self.probs = np.zeros(len(ancestral_sequence))
 
 
 def parse_branch_length(nwk, index):
@@ -32,7 +35,7 @@ def parse_branch_length(nwk, index):
     return branch_length, end_index
 
 
-def parse_leaf(nwk, index):
+def parse_leaf(nwk, index, obs):
     end_index = index
     while(nwk[end_index].isnumeric()):
         end_index += 1
@@ -42,25 +45,25 @@ def parse_leaf(nwk, index):
     # get past colon
     index += 1
     branch_length, end_index = parse_branch_length(nwk, index)
-    return Node(name, None, None, branch_length), end_index
+    return Node(name, None, None, branch_length, obs[name]), end_index
 
 
-def parse_nwk(nwk, index):
+def parse_nwk(nwk, index, obs):
     index += 1
     if(nwk[index].isnumeric()):
-        left, index = parse_leaf(nwk, index)
+        left, index = parse_leaf(nwk, index, obs)
         index += 2
-        right, index = parse_leaf(nwk, index)
+        right, index = parse_leaf(nwk, index, obs)
         index += 2
         branch_length, end_index = parse_branch_length(nwk, index)
-        return Node(None, left, right, branch_length), end_index
+        return Node(None, left, right, branch_length, np.zeros(len(obs[0]))), end_index
     else:
-        left, index = parse_nwk(nwk, index)
+        left, index = parse_nwk(nwk, index, obs)
         index += 2
         if(nwk[index].isnumeric()):
-            right, index = parse_leaf(nwk, index)
+            right, index = parse_leaf(nwk, index, obs)
         else:
-            right, index = parse_nwk(nwk, index)
+            right, index = parse_nwk(nwk, index, obs)
         index += 2
         branch_length, end_index = parse_branch_length(nwk, index)
-        return Node(None, left, right, branch_length), end_index
+        return Node(None, left, right, branch_length, np.zeros(len(obs[0]))), end_index
