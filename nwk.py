@@ -7,7 +7,7 @@ class Node():
         right: right child (Node)
         branch_length: length of branch that leads to this node (float)
         probs: probability of observed bases beneath this node
-                [list of 4 probs for 'ACGT'] (initialized to None)
+                [4 x m probs for 'ACGT'] (initialized to None)
     '''
 
     def __init__(self, name, left, right, branch_length):
@@ -15,6 +15,7 @@ class Node():
         self.left = left
         self.right = right
         self.branch_length = branch_length
+        self.ancestral_sequence = None
         self.bp = None
         self.probs = None
 

@@ -1,4 +1,3 @@
-import datetime
 import math
 import numpy as np
 import nwk as parse_nwk
@@ -55,52 +54,26 @@ def likelihood(ordering, data):
     for i in range(0, len(ordering)):
         current_node = ordering[i]
         name = current_node.name
-        current_node.probs = np.zeros((m, 4))
-        new_matrix = np.zeros((m, 4))
 
         # if it's a leaf node, 1s and 0s
         if(name is not None):
+            current_node.probs = np.zeros((m, 4))
             for j in range(0, m):
                 if(data[name][j] != '-'):
                     base_value = base_conversion[data[name][j]]
-                    new_matrix[j][base_value] = 1
+                    current_node.probs[j][base_value] = 1
                 else:
-                    # should preserve values?
-                    new_matrix[j][0] = 1
-                    new_matrix[j][1] = 1
-                    new_matrix[j][2] = 1
-                    new_matrix[j][3] = 1
+                    current_node.probs[j].fill(1)
 
         # otherwise feisenstein
         else:
-            l = current_node.left
-            l_p = l.probs
-            l_bp = l.bp
-            r = current_node.right
-            r_p = r.probs
-            r_bp = r.bp
+            current_node.probs = np.multiply(
+                np.dot(current_node.left.probs, current_node.left.bp), np.dot(current_node.right.probs, current_node.right.bp))
 
-            for i in range(0, m):
-                for x in range(0, 4):
-                    l_sum = 0
-                    r_sum = 0
-                    for y in range(0, 4):
-                        # might need to do log probs
-                        l_sum += (l_bp[x][y] * l_p[i][y])
-                        r_sum += (r_bp[x][y] * r_p[i][y])
-                    new_matrix[i][x] = l_sum * r_sum
-        # add back to probs
-        current_node.probs = new_matrix
     # get current node matrix, add rows together, divide by 4, then add up logs (can reorder)
     final_matrix = ordering[len(ordering) - 1].probs
-    likelihoods = np.zeros(m)
-    sum = 0
-    for i in range(0, m):
-        curr_likelihood = 0
-        for x in range(0, 4):
-            curr_likelihood += final_matrix[i][x]
-        likelihoods[i] = np.log(curr_likelihood / 4)
-        sum += likelihoods[i]
+    likelihoods = np.log(final_matrix.sum(axis=1) / 4)
+    sum = np.sum(likelihoods)
     return likelihoods
 
 

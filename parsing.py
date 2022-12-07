@@ -1,5 +1,6 @@
 import argparse
-import math
+import datetime
+import training
 import numpy as np
 import hmm
 import phylo
@@ -91,6 +92,8 @@ Returns:
 def find_intervals(sequence):
     intervals = []
     i = 1
+    num = 0
+    num_5_10 = 0
     while (i < len(sequence) + 1):
         if(sequence[i - 1] == 0):
             start = i
@@ -100,21 +103,14 @@ def find_intervals(sequence):
                 end += 1
             if(start != end):
                 intervals = intervals + [(start, end)]
-            num += end - start + 1
             if(i > 4999 and i < 10001):
                 num_5_10 += end - start + 1
+            else:
+                num += end - start + 1
         i += 1
+    print(num / (len(sequence) - 5000))
+    print(num_5_10 / 5000)
     return intervals
-
-
-def find_init_probs(prob_matrix):
-    probs = np.zeros(len(prob_matrix))
-    total = 0
-    for i in range(len(prob_matrix)):
-        for j in range(len(prob_matrix[0])):
-            probs[j] += prob_matrix[i][j]
-            total += prob_matrix[i][j]
-    return (probs / total)
 
 
 def main():
@@ -143,13 +139,17 @@ def main():
     init_models = read_models(model_file)
     init_weights = read_weights(weight_file)
 
-    init_probs = find_init_probs(transitions)
+    init_probs = training.train_initial_weightings(transitions)
     orderings = phylo.build_orderings(init_models)
     phylo.reweight(orderings, init_weights)
 
+    # print(datetime.datetime.now())
     emiss_probs = phylo.phylo(orderings, obs)
-
+    # print(datetime.datetime.now())
     sequence, p = hmm.viterbi(obs, transitions, emiss_probs, init_probs)
+    # print(datetime.datetime.now())
+    print(p)
+    print(training.train_transitions(transitions, sequence))
     intervals = find_intervals(sequence)
     with open(intervals_file, "w") as f:
         f.write("\n".join([("%d,%d" % (start, end))

@@ -44,6 +44,7 @@ def viterbi(obs, trans_probs, phylo, init_probs):
     for i in range(1, m):
         for j in range(0, a):
             # find maximum:
+            # TODO: np.argmax?? argmax sum
             max_state = 0
             max_state_prob = hmm[0][i - 1] + trans_probs[0][j]
             for k in range(1, a):
@@ -54,7 +55,7 @@ def viterbi(obs, trans_probs, phylo, init_probs):
             hmm[j][i] = max_state_prob + phylo[j][i]
             traceback[j][i] = max_state
     # find starting point
-    sequence = np.zeros(m)
+    sequence = np.zeros(m, int)
     curr_state = 0
     curr_state_prob = hmm[0][m - 1]
     for k in range(1, a):
