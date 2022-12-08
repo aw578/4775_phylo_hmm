@@ -70,4 +70,4 @@ def viterbi(trans_probs, phylo, init_probs):
     for i in range(m - 1, 0, -1):
         curr_state = traceback[curr_state][i]
         sequence[i - 1] = curr_state
-    return sequence, curr_state_prob
+    return sequence

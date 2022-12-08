@@ -6,8 +6,7 @@ import nwk
 def jcm(len):
     at = 0.75*(1 - math.e**(-4 * len / 3))
     bp = np.full((4, 4), at / 3)
-    for i in range(0, 4):
-        bp[i][i] = (1 - at)
+    np.fill_diagonal(bp, 1 - at)
     return bp
 
 

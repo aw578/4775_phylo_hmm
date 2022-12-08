@@ -8,24 +8,54 @@ def train_transitions(transitions, sequence):
     for i in range(len(sequence) - 1):
         new_transitions[sequence[i]][sequence[i+1]] += 1
         new_weightings[sequence[i]] += 1
-    return new_transitions / new_weightings
+    for i in range(len(new_transitions)):
+        new_transitions[i] = new_transitions[i] / new_weightings[i]
+    return new_transitions
 
 # generate ancestral sequence for parent
 # optimal transition matrix of child: trans_probs[x][x] = %agreements, trans_probs[x][y] = (1 - %agreements) / 3
 
 
-def generate_ancestral_sequence(parent):
-    # note: if both children are a -, then ancestral sequence is also a -
-    
-    pass
+def set_ancestral_sequence(parent):
+    ancestral_sequence = np.argmax(parent.probs, axis=1)
+    # if both children are -, then ancestral sequence is also a -
+    for i in range(0):
+        if(parent.left.ancestral_sequence[i] == '-' and parent.right.ancestral_sequence[i] == '-'):
+            ancestral_sequence[i] = 4
+
+    parent.ancestral_sequence = ancestral_sequence
 
 
-def train_model_jcm(orderings, sequence):
-    # for each ordering:
-    #   for each node:
-    #     if it's not a leaf, set ancestral sequence
-    #     set optimal branch lengths for children using ancestral sequences
-    pass
+def set_jcm_branch_lengths(parent):
+    # percentage of agreements between ancestral sequence and child sequence on diagonals
+    agreements = 0
+    p_seq = parent.ancestral_sequence
+    l_seq = parent.left.ancestral_sequence
+    r_seq = parent.right.ancestral_sequence
+    for i in range(len(parent.ancestral_sequence)):
+        agreements += (p_seq[i] == '-' or l_seq[i] ==
+                       '-' or p_seq[i] == l_seq[i])
+    agreements /= len(parent.ancestral_sequence)
+    new_jcm = np.full((4, 4), (1 - agreements) / 3)
+    np.fill_diagonal(new_jcm, agreements)
+    parent.left.bp = new_jcm
+
+    agreements = 0
+    for i in range(len(parent.ancestral_sequence)):
+        agreements += (p_seq[i] == '-' or r_seq[i] ==
+                       '-' or p_seq[i] == r_seq[i])
+    agreements /= len(parent.ancestral_sequence)
+    new_jcm = np.full((4, 4), (1 - agreements) / 3)
+    np.fill_diagonal(new_jcm, agreements)
+    parent.right.bp = new_jcm
+
+
+def train_model(orderings):
+    for i in range(len(orderings)):
+        for j in range(len(orderings[i])):
+            if(orderings[i][j].left != None and orderings[i][j].right != None):
+                set_ancestral_sequence(orderings[i][j])
+                set_jcm_branch_lengths(orderings[i][j])
 
 
 def train_initial_weightings(prob_matrix):

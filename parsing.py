@@ -114,18 +114,18 @@ def find_intervals(sequence):
             start = i
             end = i
             while(i < len(sequence) and sequence[i] == 0):
+                if(i > 4999 and i < 10001):
+                    num_5_10 += 1
+                else:
+                    num += 1
                 i += 1
                 end += 1
             if(start != end):
                 intervals = intervals + [(start, end)]
-            if(i > 4999 and i < 10001):
-                num_5_10 += end - start + 1
-            else:
-                num += end - start + 1
         i += 1
-    print("conserved within conserved region: " +
+    print("conserved within nonconserved region: " +
           str(num * 100 / (len(sequence) - 5000)) + "%")
-    print("conserved within nonconserved region: " + str(num_5_10 / 50) + "%")
+    print("conserved within conserved region: " + str(num_5_10 / 50) + "%")
     return intervals
 
 
@@ -155,15 +155,16 @@ def main():
     init_models = read_models(model_file)
     init_weights = read_weights(weight_file)
 
-    init_probs = training.train_initial_weightings(transitions)
     orderings = phylo.build_orderings(init_models, obs)
     phylo.reweight(orderings, init_weights)
-
-    # print(datetime.datetime.now())
-    emiss_probs = phylo.phylo(orderings)
-    # print(datetime.datetime.now())
-    sequence, p = hmm.viterbi(transitions, emiss_probs, init_probs)
-    # print(datetime.datetime.now())
+    for _ in range(10):
+        init_probs = training.train_initial_weightings(transitions)
+        emiss_probs = phylo.phylo(orderings)
+        print(init_probs)
+        print(transitions)
+        sequence = hmm.viterbi(transitions, emiss_probs, init_probs)
+        transitions = training.train_transitions(transitions, sequence)
+        # training.train_model(orderings)
     intervals = find_intervals(sequence)
     with open(intervals_file, "w") as f:
         f.write("\n".join([("%d,%d" % (start, end))
