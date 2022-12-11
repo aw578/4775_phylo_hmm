@@ -78,6 +78,23 @@ def read_weights(filename):
     return weights
 
 
+def parse_bcdn(filename):
+    with open(filename, "r") as f:
+        lines = f.readlines()
+    transitions = np.zeros((4, 4))
+    bases = np.zeros(4)
+    str = ""
+    dict = {"B": 0, "C": 1, "D": 2, "N": 3}
+    for i in range(0, len(lines)):
+        str += lines[i].strip()
+    for i in range(0, len(str) - 1):
+        transitions[dict[str[i]]][dict[str[i + 1]]] += 1
+        bases[dict[str[i]]] += 1
+    for i in range(4):
+        transitions[i] /= bases[i]
+    return transitions
+
+
 '''
 Arguments:
   filename: the file to read
@@ -110,7 +127,7 @@ def find_intervals(sequence):
     num = 0
     num_5_10 = 0
     while (i < len(sequence) + 1):
-        if(sequence[i - 1] == 0):
+        if(sequence[i - 1] == 1):
             start = i
             end = i
             while(i < len(sequence) and sequence[i] == 0):
@@ -133,9 +150,9 @@ def main():
     parser = argparse.ArgumentParser(
         description='Parse sequences into coding and noncoding regions using Phylo-HMM.')
     parser.add_argument('-seqs', action="store", dest="seqs",
-                        type=str, default="hsv.fasta")
+                        type=str, default="data1/msa/data1-msa.fasta")
     parser.add_argument('-t', action="store", dest="transitions",
-                        type=str, default="transitions.txt")
+                        type=str, default="data1/msa/annotated msa subsets/data1-ul42ul48-bcdn.fasta")
     parser.add_argument('-m', action="store", dest="models",
                         type=str, default="hsv.nwk")
     parser.add_argument('-w', action="store", dest="weights",
@@ -151,7 +168,8 @@ def main():
     intervals_file = args.out
 
     obs = read_fasta(fasta_file)
-    transitions = read_transitions(transition_file)
+    #transitions = read_transitions(transition_file)
+    transitions = parse_bcdn(transition_file)
     init_models = read_models(model_file)
     init_weights = read_weights(weight_file)
 
@@ -161,7 +179,7 @@ def main():
         init_probs = training.train_initial_weightings(transitions)
         emiss_probs = phylo.phylo(orderings)
         print(init_probs)
-        print(transitions)
+        # print(transitions)
         sequence = hmm.viterbi(transitions, emiss_probs, init_probs)
         transitions = training.train_transitions(transitions, sequence)
         # training.train_model(orderings)
