@@ -5,12 +5,15 @@ import datetime
 def train_transitions(transitions, sequence):
     new_transitions = np.zeros((len(transitions), len(transitions)))
     new_weightings = np.zeros(len(transitions))
+    new_probs = np.zeros(len(transitions))
     for i in range(len(sequence) - 1):
         new_transitions[sequence[i]][sequence[i+1]] += 1
         new_weightings[sequence[i]] += 1
+        new_probs[sequence[i]] += 1
+    new_probs[sequence[len(sequence) - 1]] += 1
     for i in range(len(new_transitions)):
         new_transitions[i] = new_transitions[i] / new_weightings[i]
-    return new_transitions
+    return new_transitions, (new_probs / len(sequence))
 
 # generate ancestral sequence for parent
 # optimal transition matrix of child: trans_probs[x][x] = %agreements, trans_probs[x][y] = (1 - %agreements) / 3

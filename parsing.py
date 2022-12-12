@@ -83,16 +83,23 @@ def parse_bcdn(filename):
         lines = f.readlines()
     transitions = np.zeros((4, 4))
     bases = np.zeros(4)
+    init_probs = np.zeros(4)
     str = ""
     dict = {"B": 0, "C": 1, "D": 2, "N": 3}
     for i in range(0, len(lines)):
         str += lines[i].strip()
     for i in range(0, len(str) - 1):
         transitions[dict[str[i]]][dict[str[i + 1]]] += 1
+        init_probs[dict[str[i]]] += 1
         bases[dict[str[i]]] += 1
+        # weight transitions more heavily?
+        if(dict[str[i]] != dict[str[i+1]]):
+            transitions[dict[str[i]]][dict[str[i + 1]]] += 9
+            bases[dict[str[i]]] += 9
+    init_probs[dict[str[len(str) - 1]]] += 1
     for i in range(4):
         transitions[i] /= bases[i]
-    return transitions
+    return transitions, (init_probs / len(str))
 
 
 '''
@@ -152,7 +159,7 @@ def main():
     parser.add_argument('-seqs', action="store", dest="seqs",
                         type=str, default="data1/msa/data1-msa.fasta")
     parser.add_argument('-t', action="store", dest="transitions",
-                        type=str, default="data1/msa/annotated msa subsets/data1-ul42ul48-bcdn.fasta")
+                        type=str, default="strain 17 annotations/17-bcdn.fasta")
     parser.add_argument('-m', action="store", dest="models",
                         type=str, default="hsv.nwk")
     parser.add_argument('-w', action="store", dest="weights",
@@ -169,20 +176,20 @@ def main():
 
     obs = read_fasta(fasta_file)
     #transitions = read_transitions(transition_file)
-    transitions = parse_bcdn(transition_file)
+    transitions, init_probs = parse_bcdn(transition_file)
     init_models = read_models(model_file)
     init_weights = read_weights(weight_file)
 
     orderings = phylo.build_orderings(init_models, obs)
     phylo.reweight(orderings, init_weights)
     for _ in range(10):
-        init_probs = training.train_initial_weightings(transitions)
+        # init_probs = training.train_initial_weightings(transitions)
         emiss_probs = phylo.phylo(orderings)
         print(init_probs)
         # print(transitions)
         sequence = hmm.viterbi(transitions, emiss_probs, init_probs)
-        transitions = training.train_transitions(transitions, sequence)
-        # training.train_model(orderings)
+        transitions, init_probs = training.train_transitions(
+            transitions, sequence)
     intervals = find_intervals(sequence)
     with open(intervals_file, "w") as f:
         f.write("\n".join([("%d,%d" % (start, end))
