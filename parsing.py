@@ -132,14 +132,14 @@ def find_intervals(sequence):
     intervals = []
     i = 1
     num = 0
-    num_5_10 = 0
+    num_conserved = 0
     while (i < len(sequence) + 1):
-        if(sequence[i - 1] == 1):
+        if(sequence[i - 1] == 0):
             start = i
             end = i
             while(i < len(sequence) and sequence[i] == 0):
-                if(i > 4999 and i < 10001):
-                    num_5_10 += 1
+                if((i >= 0 and i < 2000) or (i >= 4000 and i < 6000) or (i >= 8000 and i < 10000)):
+                    num_conserved += 1
                 else:
                     num += 1
                 i += 1
@@ -148,8 +148,9 @@ def find_intervals(sequence):
                 intervals = intervals + [(start, end)]
         i += 1
     print("conserved within nonconserved region: " +
-          str(num * 100 / (len(sequence) - 5000)) + "%")
-    print("conserved within conserved region: " + str(num_5_10 / 50) + "%")
+          str(num * 100 / (len(sequence) - 6000)) + "%")
+    print("conserved within conserved region: " +
+          str(num_conserved / 6000) + "%")
     return intervals
 
 
@@ -157,11 +158,11 @@ def main():
     parser = argparse.ArgumentParser(
         description='Parse sequences into coding and noncoding regions using Phylo-HMM.')
     parser.add_argument('-seqs', action="store", dest="seqs",
-                        type=str, default="data1/msa/data1-msa.fasta")
+                        type=str, default="test_seq.fasta")
     parser.add_argument('-t', action="store", dest="transitions",
-                        type=str, default="strain 17 annotations/17-bcdn.fasta")
+                        type=str, default="test_bcdn.fasta")
     parser.add_argument('-m', action="store", dest="models",
-                        type=str, default="hsv.nwk")
+                        type=str, default="test_hsv.nwk")
     parser.add_argument('-w', action="store", dest="weights",
                         type=str, default="weights.txt")
     parser.add_argument('-out', action="store", dest="out",
@@ -176,7 +177,9 @@ def main():
 
     obs = read_fasta(fasta_file)
     #transitions = read_transitions(transition_file)
-    transitions, init_probs = parse_bcdn(transition_file)
+    #transitions, init_probs = parse_bcdn(transition_file)
+    transitions = [[0.9998, 0.0002], [0.0002, 0.9998]]
+    init_probs = [0.5, 0.5]
     init_models = read_models(model_file)
     init_weights = read_weights(weight_file)
 
@@ -186,8 +189,9 @@ def main():
         # init_probs = training.train_initial_weightings(transitions)
         emiss_probs = phylo.phylo(orderings)
         print(init_probs)
-        # print(transitions)
-        sequence = hmm.viterbi(transitions, emiss_probs, init_probs)
+        print(transitions)
+        # sequence = hmm.viterbi(transitions, emiss_probs, init_probs)
+        sequence = hmm.forward_backward(transitions, emiss_probs, init_probs)
         transitions, init_probs = training.train_transitions(
             transitions, sequence)
     intervals = find_intervals(sequence)
