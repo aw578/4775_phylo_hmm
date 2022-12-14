@@ -14,8 +14,54 @@ Example Usage:
     python 2a.py -f hmm-sequence.fasta -mu 0.01 -out viterbi-intervals.txt
 '''
 
-import datetime
+import argparse
 import numpy as np
+from math import exp
+
+
+def sumLogProbs(a, b):
+    if a > b:
+        return a + np.log1p(exp(b-a))
+    else:
+        return b + np.log1p(exp(a-b))
+
+
+def forward_backward(trans_probs, phylo, init_probs):
+    # Initialization
+    # 0 = h, 1 = l
+    m = len(phylo[0])
+    a = len(trans_probs)
+    hmm = np.zeros((a, m))
+
+    for j in range(len(trans_probs)):
+        hmm[j][0] = init_probs[j] + phylo[j][0]
+
+    # Forwards + forwards-backwards
+    for i in range(1, m):
+        for k in range(0, a):
+            hmm[k][i] = hmm[0][i-1] + trans_probs[0][k]
+            for j in range(1, a):
+                hmm[k][i] = sumLogProbs(
+                    hmm[k][i], hmm[j][i-1] + trans_probs[j][k])
+            hmm[k][i] += phylo[k][i]
+
+    # Backwards + forwards-backwards
+    # something about adding to hmm is fucking things up?
+    back = np.zeros((a, m))
+    for i in range(m - 2, -1, -1):
+        for k in range(0, a):
+            back[k][i] = trans_probs[k][0] + phylo[0][i + 1] + back[0][i+1]
+            for j in range(1, a):
+                back[k][i] = sumLogProbs(
+                    back[k][i], trans_probs[k][j] + phylo[j][i + 1] + back[j][i + 1])
+            hmm[k][i] += back[k][i]
+        local_prob = hmm[0][i]
+        for k in range(1, a):
+            local_prob = sumLogProbs(local_prob, hmm[k][i])
+
+        for k in range(0, a):
+            hmm[k][i] -= local_prob
+    return np.argmax(hmm, axis=0)
 
 
 ''' Outputs the Viterbi decoding of a given observation.
