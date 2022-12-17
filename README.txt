@@ -1,3 +1,6 @@
+Command formatting:
+python parsing.py -seqs (msa sequences) -bcdn (bcdn annotations) -m (newick trees) 
+
 Notes on formatting:
 
 the fasta file should be in this format:

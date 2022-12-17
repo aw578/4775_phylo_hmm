@@ -10,6 +10,9 @@ def train_transitions(transitions, sequence):
         new_transitions[sequence[i]][sequence[i+1]] += 1
         new_weightings[sequence[i]] += 1
         new_probs[sequence[i]] += 1
+        if(sequence[i] != sequence[i+1]):
+            new_transitions[sequence[i]][sequence[i+1]] += 99
+            new_weightings[sequence[i]] += 99
     new_probs[sequence[len(sequence) - 1]] += 1
     for i in range(len(new_transitions)):
         new_transitions[i] = new_transitions[i] / new_weightings[i]
