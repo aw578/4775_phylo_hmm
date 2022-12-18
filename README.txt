@@ -1,5 +1,5 @@
 Command formatting:
-python parsing.py -seqs (msa sequences) -bcdn (bcdn annotations) -m (newick trees) 
+python parsing.py -seqs (msa sequences) -bcdn (bcdn annotations) -m (newick trees) -out (interval storage file)
 
 Notes on formatting:
 

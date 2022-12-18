@@ -117,20 +117,40 @@ def compare_accuracy(new_seq, base_seq):
     return (agreements / len(new_seq))
 
 
+def find_intervals(sequence):
+    intervals = []
+    i = 1
+    num = 0
+    num_5_10 = 0
+    while (i < len(sequence) + 1):
+        if(sequence[i - 1] == 1):
+            start = i
+            end = i
+            while(i < len(sequence) and sequence[i] == 1):
+                i += 1
+                end += 1
+            intervals = intervals + [(start, end)]
+        i += 1
+    return intervals
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description='Parse sequences into coding and noncoding regions using Phylo-HMM.')
+        description='Parse sequences using Phylo-HMM.')
     parser.add_argument('-seqs', action="store", dest="seqs",
                         type=str, default="data2/msa/data2-msa.fasta")
     parser.add_argument('-bcdn', action="store", dest="bcdn",
                         type=str, default="strain 17 annotations/17-bcdn.fasta")
     parser.add_argument('-m', action="store", dest="models",
                         type=str, default="data2/hsv.nwk")
+    parser.add_argument('-out', action="store", dest="out",
+                        type=str, default="intervals.txt")
 
     args = parser.parse_args()
     fasta_file = args.seqs
     bcdn_file = args.bcdn
     model_file = args.models
+    intervals_file = args.out
 
     obs = read_fasta(fasta_file)
     transitions, init_probs, init_seq = parse_bcdn(bcdn_file)
@@ -138,11 +158,15 @@ def main():
     orderings = phylo.build_orderings(init_models, obs)
     for _ in range(2):
         emiss_probs = phylo.phylo(orderings)
-        print(init_probs)
         sequence = hmm.forward_backward(transitions, emiss_probs, init_probs)
         transitions, init_probs = training.train_transitions(
             transitions, sequence)
     print(compare_accuracy(sequence, init_seq))
+    intervals = find_intervals(sequence)
+    with open(intervals_file, "w") as f:
+        f.write("\n".join([("%d,%d" % (start, end))
+                for (start, end) in intervals]))
+        f.write("\n")
 
 
 if __name__ == "__main__":
