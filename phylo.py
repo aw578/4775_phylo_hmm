@@ -26,15 +26,10 @@ def build_orderings(init_models, obs):
         root, _ = nwk.parse_nwk(model, 0, obs)
         ordering = []
         traverse(root, ordering)
+        for j in range(len(ordering)):
+            ordering[j].bp = jcm(ordering[j].branch_length)
         final_orderings.append(ordering)
     return final_orderings
-
-
-def reweight(final_orderings, init_weights):
-    for i in range(len(final_orderings)):
-        for j in range(len(final_orderings[i])):
-            final_orderings[i][j].branch_length *= init_weights[i]
-            final_orderings[i][j].bp = jcm(final_orderings[i][j].branch_length)
 
 
 ''' Computes the likelihood of the data given the topology specified by ordering

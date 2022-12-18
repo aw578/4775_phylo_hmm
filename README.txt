@@ -1,3 +1,6 @@
+To run the code:
+python parsing.py -seqs (fasta seqs) -t (initial transition probabilities) -m (newick trees) -iters (number of iterations of EM) -out (interval storage file)
+
 Notes on formatting:
 
 the fasta file should be in this format:
