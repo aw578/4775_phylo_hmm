@@ -157,7 +157,7 @@ def main():
     parser.add_argument('-iters', action="store", dest="iters",
                         type=int, default=10)
     parser.add_argument('-out', action="store", dest="out",
-                        type=str, default="viterbi-intervals.txt")
+                        type=str, default="intervals.txt")
 
     args = parser.parse_args()
     fasta_file = args.seqs
